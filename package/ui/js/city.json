@@ -1,0 +1,10 @@
+{
+    "aps": {
+        "type": "http://myweatherdemo.com/async/city/1.0"
+    	},
+    "city": "",
+    "country": "",
+    "units": "celsius",
+    "description": "",
+    "include_humidity": true
+}

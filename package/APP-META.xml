@@ -1,0 +1,48 @@
+<application version="2.0" xmlns="http://aps-standard.org/ns/2">
+
+    <id>http://myweatherdemo.com/async</id>
+    <name>myweatherdemo-async</name>
+    <version>1.0</version>
+    <release>1</release>
+    <presentation>
+        <navigation id="ccp" label="MyWeatherDemo">
+            <var name="subscription_service" type-id="http://myweatherdemo.com/async/subscription_service/1.0"/>
+            <plugs-to id="http://www.aps-standard.org/ui/service"/>
+            <item id="cities" label="Cities">
+                <view id="cities" label="Tracked Cities">
+                    <view id="city.add" label="Track New City">
+                        <controls>
+                            <cancel/>
+                            <submit/>
+                        </controls>
+                    </view>
+                    <view id="city.edit" label="Edit City">
+                        <var name="city" type-id="http://myweatherdemo.com/async/city/1.0"/>
+                        <controls>
+                            <cancel/>
+                            <submit/>
+                        </controls>
+                    </view>
+                </view>
+            </item>
+        </navigation>
+    </presentation>
+
+    <license-agreement>
+        <free/>
+        <text>
+            <name>End-User License Agreement</name>
+            <url>http://opensource.org/licenses/bsd-license</url>
+        </text>
+    </license-agreement>
+
+    <service id="application">
+        <code engine="php" path="scripts/application.php"/>
+    </service>
+    <service id="subscription_service">
+        <code engine="php" path="scripts/subscription_service.php"/>
+    </service>
+    <service id="city">
+        <code engine="php" path="scripts/city.php"/>
+    </service>
+</application>
