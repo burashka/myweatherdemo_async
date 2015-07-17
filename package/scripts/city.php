@@ -60,14 +60,8 @@
          */
         public $status;
 
-        /**
-         * @type(string)
-         * @title("Status Message")
-         */
-        public $status_message;
-
-        // MyWeatherDemo API URL to work with watchcities
-        const BASE_URL = "http://www.myweatherdemo.com/api/watchcityasync/";
+        // MyWeatherDemo API URL
+        const BASE_URL = "http://www.myweatherdemo.com/api/";
 
         public function provision(){
             
@@ -82,7 +76,7 @@
                     'includeHumidity' => $this->include_humidity
             );
             
-            $response = send_curl_request(false, $this->subscription_service->company_token, 'POST', self::BASE_URL, $request);
+            $response = send_curl_request(false, $this->subscription_service->company_token, 'POST', self::BASE_URL . 'watchcityasync/', $request);
 
             $this->external_city_id = $response->{'id'};
 
@@ -91,11 +85,8 @@
         }
 
         public function provisionAsync(){
-            $url = self::BASE_URL . $this->external_city_id;
+            $url = self::BASE_URL . 'watchcityasync/' . $this->external_city_id;
             $response = send_curl_request(false, $this->subscription_service->company_token, 'GET', $url);
-
-            $logger = \APS\LoggerRegistry::get();
-            $logger->debug("status is: " . print_r($response->status, true));
 
             switch ($response->status){
                 case "provisioning":
@@ -106,7 +97,6 @@
                     break;
                 case "country_not_found":
                     $this->status = "country_not_found";
-                    $this->status_message = "Please check the spelling of the country you have provided.";
                     break;
                 case "provisioned":
                     $this->status = "provisioned";
@@ -116,7 +106,7 @@
 
         public function configure($new){
 
-            $url = self::BASE_URL . $this->external_city_id;
+            $url = self::BASE_URL . 'watchcity/' . $this->external_city_id;
 
             // we are updating only these three properties since only they can be changed in UI
             $request = array(
@@ -131,7 +121,7 @@
 
         public function unprovision(){
 
-            $url = self::BASE_URL . $this->external_city_id;
+            $url = self::BASE_URL . 'watchcity/' . $this->external_city_id;
             $response = send_curl_request(false, $this->subscription_service->company_token, 'DELETE', $url);
             
         }

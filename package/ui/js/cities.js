@@ -4,11 +4,10 @@ require([
     "dojo/when",
     "aps/load",
     "dojox/mvc/at",
-    "aps/xhr",
     "aps/Button",
-    "./js/displayError.js",
+    "aps/Container",
     "aps/ready!"
-], function (ResourceStore, registry, when, load, at, xhr, Button, displayError) {
+], function (ResourceStore, registry, when, load, at, Button, Container) {
 
     // creating a connector to APS controller
     // by specifying apsType we will get only resources of this type from APS controller
@@ -29,21 +28,20 @@ require([
             ["aps/Grid",
                 {
                     id: "grid",
-                    // user can select several rows
-                    selectionMode: "multiple",
                     // when this aps/Grid is loaded store.query() will be automatically executed fetching list of all the cities from APS controller
                     store: store,
                     columns: [
-                        // resourceName attribute on a column specifies which column value should be displayed as a link
                         { field: "city", name: "City"},
                         { field: "country", name: "Country" },
                         { field: "description", name: "Description" },
                         { field: "units", name: "Units of measurement" },
-                        { field: "include_humidity", name: "showHumidity" },
-                        { field: "status", name: "status", renderCell: function(row, status){
+                        { field: "include_humidity", name: "Show Humidity?", renderCell: function(row, data) { return data ? "Yes" : "No"; } },
+                        { field: "status", name: "Status", renderCell: function(row, status){
 
                             if (row.aps.status == "aps:provisioning") {
 
+                                // if a resource in aps:provisioning status hasn't been updated for a long time
+                                // this usually means that the task has failed
                                 var TWO_MINUTES = 120000,
                                     last_updated = Date.parse(row.aps.modified),
                                     current = Date.now();
@@ -57,14 +55,47 @@ require([
                                 return status;
                             }
                         }},
-                        { field: "status_message", name: "status_message"},
-                        { field: "edit", name: "edit", renderCell: function(row){
+                        // the resource displayed in this row can be accessed through 'row'
+                        { field: "buttons", name: "Operations", renderCell: function(row){
+
+                            var con = new Container({});
+
+                            var editButton = new Button({
+                                autoBusy: false,
+                                iconClass: "sb-edit",
+                                label: "Edit",
+                                onClick: function() {
+                                    aps.apsc.gotoView("city.edit", row.aps.id);
+                                }
+                            });
+
+                            var deleteButton = new Button({
+                                iconClass: "sb-delete",
+                                label: "Delete",
+                                onClick: function() {
+                                    when(store.remove(row.aps.id), function() {
+                                        var grid = registry.byId("grid");
+                                        grid.refresh();
+                                    });
+                                }
+                            });
+
+                            // if city was sucessfully created in MyWeatherDemo we can allow modification and removal
                             if (row.status == "provisioned") {
-                                return new Button({ iconClass: "sb-edit", label: "Edit",
-                                    onClick: function() {
-                                        aps.apsc.gotoView("city.edit", row.aps.id);
-                                    }
-                                });
+
+                                con.addChild(editButton);
+                                con.addChild(deleteButton);
+                                return con;
+
+                            // if there was a typo in country name the city object should be recreated, we cannot allow to modify it
+                            } else if (row.status == "country_not_found") {
+
+                                con.addChild(deleteButton);
+                                return con;
+
+                            // if city is in status 'provisioning' or provisioning failed we do not allow modification
+                            // provisioning: company admin has to wait until provisioning either succeeds or fails
+                            // provisioning_failed: it's up to the provider to fix the failed task
                             } else {
                                 return "";
                             }
@@ -73,37 +104,11 @@ require([
                 },
                 [["aps/Toolbar", [
                     ["aps/ToolbarButton", {
-                        // button will not be disabled after click
                         autoBusy: false,
-                        // using predefined button icon
                         iconClass: "sb-add-new",
                         label: "Add",
                         onClick: function() {
-                            // gotoView() allows us to conditionally redirect the user to a specific view
                             aps.apsc.gotoView("city.add");
-                        }
-                    }],
-                    ["aps/ToolbarButton", {
-                        autoBusy: false,
-                        requireItems: true,
-                        iconClass: "sb-delete",
-                        label: "Delete",
-                        onClick: function() {
-                            // getting access to user selection in aps/Grid
-                            var grid = registry.byId("grid");
-                            var sel = grid.get("selectionArray");
-                            for (var i=0; i<sel.length; i++){
-                                // deleting each selected city
-                                when(store.remove(sel[i]), function() {
-                                    // if city was successfully removed from MyWeatherDemo: removing selection from selectionArray
-                                    sel.splice(sel.indexOf(i),1);
-                                    // refreshing data in a grid to not show cities which were already removed from the store
-                                    grid.refresh();
-                                }, function(err) {
-                                    // if there was a problem removing a city from MyWeatherDemo: showing the error message to the user
-                                    displayError(err);
-                                });
-                            };
                         }
                     }]
                 ]]]
