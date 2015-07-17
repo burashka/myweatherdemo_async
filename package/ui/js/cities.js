@@ -37,23 +37,13 @@ require([
                         { field: "units", name: "Units of measurement" },
                         { field: "include_humidity", name: "Show Humidity?", renderCell: function(row, data) { return data ? "Yes" : "No"; } },
                         { field: "status", name: "Status", renderCell: function(row, status){
+                            // if a resource in aps:provisioning status hasn't been updated for a long time
+                            // this usually means that the task has failed
+                            var THREE_MINUTES = 180000,
+                                last_updated = Date.parse(row.aps.modified),
+                                current = Date.now();
 
-                            if (row.aps.status == "aps:provisioning") {
-
-                                // if a resource in aps:provisioning status hasn't been updated for a long time
-                                // this usually means that the task has failed
-                                var THREE_MINUTES = 180000,
-                                    last_updated = Date.parse(row.aps.modified),
-                                    current = Date.now();
-
-                                if (last_updated + THREE_MINUTES < current) {
-                                        return "provisioning_failed";
-                                } else {
-                                    return status;
-                                }
-                            } else {
-                                return status;
-                            }
+                            return row.aps.status !== "aps:provisioning" || last_updated + THREE_MINUTES > current ? status : "provisioning_failed";
                         }},
                         // the resource displayed in this row can be accessed through 'row'
                         { field: "buttons", name: "Operations", renderCell: function(row){
