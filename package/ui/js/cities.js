@@ -42,11 +42,11 @@ require([
 
                                 // if a resource in aps:provisioning status hasn't been updated for a long time
                                 // this usually means that the task has failed
-                                var TWO_MINUTES = 120000,
+                                var THREE_MINUTES = 180000,
                                     last_updated = Date.parse(row.aps.modified),
                                     current = Date.now();
 
-                                if (last_updated + TWO_MINUTES < current) {
+                                if (last_updated + THREE_MINUTES < current) {
                                         return "provisioning_failed";
                                 } else {
                                     return status;
